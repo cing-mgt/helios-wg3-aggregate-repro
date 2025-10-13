@@ -1,0 +1,114 @@
+# -------------------------
+# OS / Editor junk
+# -------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+Icon?
+._*
+
+# Editors / envs
+.idea/
+.vscode/
+
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.build/
+build/
+dist/
+.eggs/
+*.egg-info/
+pip-wheel-metadata/
+.venv/
+venv/
+ENV/
+env/
+.ipynb_checkpoints/
+
+# -------------------------
+# R & RStudio
+# -------------------------
+.Rhistory
+.Rapp.history
+.RData
+.Ruserdata
+.Rprofile
+.Renviron
+.Rproj.user/
+.Rcheck/
+# Packrat / renv (keep lockfile; ignore libraries)
+packrat/
+renv/library/
+renv/staging/
+
+# Knit/Render caches and intermediates
+*_cache/
+cache/
+*.utf8.md
+*.knit.md
+*.nb.html
+
+# -------------------------
+# Logs & misc
+# -------------------------
+*.log
+logs/
+*.tmp
+tmp/
+.cache/
+
+# -------------------------
+# Figures (keep finals)
+# -------------------------
+figures/tmp/
+figures/**/tmp/
+figures/*_draft.*
+figures/*_tmp.*
+# If you prefer to ignore ALL generated figures, uncomment:
+# figures/*
+
+# -------------------------
+# Data
+# -------------------------
+# Strategy: ignore most spreadsheets by default, then allow only public, de-identified files
+data/**/*.xlsx
+data/*.xlsx
+data/**/*.csv
+data/*.csv
+
+# Public, de-identified allowlist (keep versioned):
+!data/WG3_survey_deidentified_no_freetext.csv
+!data/WG3_survey_deidentified_no_freetext.xlsx
+!data/centre_level_aggregate_public.csv
+!data/centre_level_aggregate_public.xlsx
+# If you prefer a single file name (e.g., WG3_survey_responses.xlsx), keep it too:
+!data/WG3_survey_responses.xlsx
+
+# Common large/sensitive formats (uncomment if needed)
+# data/**/*.sav
+# data/**/*.dta
+# data/**/*.sas7bdat
+# data/**/*.rds
+# data/**/*.rda
+# data/**/*.feather
+# data/**/*.parquet
+
+# -------------------------
+# Secrets / credentials
+# -------------------------
+*.key
+*.pem
+*.crt
+*.p12
+*.env
+.env
+.env.*

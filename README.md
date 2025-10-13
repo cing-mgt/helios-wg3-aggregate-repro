@@ -1,0 +1,135 @@
+HELIOS WG3 — Aggregate & Reproducible Figures
+================
+
+- [Overview](#overview)
+- [Repository layout](#repository-layout)
+- [Quick start](#quick-start)
+- [Python](#python)
+- [R](#r)
+- [Notes](#notes)
+- [Reproducibility](#reproducibility)
+- [License](#license)
+- [Contact](#contact)
+
+**Status:** Pre-publication. Please do not redistribute figures outside
+the author team until the manuscript is accepted.  
+**Manuscript:** *Mapping FAIR Gaps in Hemoglobinopathy Data: Insights
+from a Cross-Sectional Survey* (in preparation).
+
+## Overview
+
+This repository contains code and de-identified inputs to reproduce the
+core figures for the HELIOS WG3 survey manuscript.  
+It includes both **Python** and **R** pipelines and writes
+publication-ready outputs to `figures/`.
+
+## Repository layout
+
+    helios-wg3-aggregate-repro/
+    ├─ data/
+    │  └─ WG3_survey_responses.xlsx         # de-identified survey data (input)
+    ├─ figures/                             # all generated outputs (PNG/PDF/TIFF)
+    ├─ scripts/
+    │  ├─ python/
+    │  │  ├─ analysis_repro.py              # data-types horizontal bar (Figure 3)
+    │  │  └─ make_funnel_plot.py            # centralized vs federated funnel (Figure 5)
+    │  └─ R/
+    │     └─ HELIOS_WG3_Final_analysis.R    # Figure 4
+    └─ README.Rmd
+
+Scripts are project-aware and always write to `figures/`, regardless of
+your working directory.
+
+## Quick start
+
+### Clone
+
+``` bash
+git clone https://github.com/cing-mgt/helios-wg3-aggregate-repro.git
+cd helios-wg3-aggregate-repro
+```
+
+### Data
+
+WG3 survey de-identified Excel file is present at:
+
+    data/WG3_survey_responses.xlsx
+
+(If you can’t access it, contact the maintainers below.)
+
+## Python
+
+### Install
+
+``` bash
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -U pip
+pip install pandas numpy matplotlib plotly kaleido Pillow
+```
+
+### Figure 3 — Data types (stacked horizontal bar)
+
+``` bash
+python scripts/python/analysis_repro.py
+```
+
+**Outputs** - `figures/helios-data-types-final.png` -
+`figures/Manuscript_Figure3.tiff`
+
+### Figure 5 — Centralized vs Federated funnel
+
+``` bash
+python scripts/python/make_funnel_plot.py --mode fixed
+```
+
+> Plotly static export requires `kaleido`; TIFF is produced from PNG at
+> 300 dpi with deflate/LZW.
+
+## R
+
+### Install
+
+``` r
+install.packages(c(
+  "data.table","dplyr","readxl","ggplot2","cowplot",
+  "ComplexUpset","ggnewscale","ragg"
+), repos = "https://cloud.r-project.org")
+```
+
+### Figure 4 — Storage (A) + Standards (B)
+
+``` bash
+Rscript scripts/R/HELIOS_WG3_Final_analysis.R
+```
+
+- **Outputs**
+  - `figures/Manuscript_Figure4.pdf`
+  - `figures/Manuscript_Figure4.tiff`
+
+## Notes
+
+- TIFFs are 600 dpi (R) / 300 dpi (Python), LZW/deflate.  
+- Project-root detection ensures outputs land in `figures/`.  
+- `ITC_status` is read from the bundled Excel for Figure 4 analyses.
+
+## Reproducibility
+
+- All figures use de-identified data.  
+- Runs are deterministic (no random seeds needed).  
+- Palettes chosen for print and accessibility (Tol palette variants;
+  monochrome ramps by group).
+
+## License
+
+MIT
+
+## Contact
+
+**HELIOS WG3**
+
+- WG3 Leader: Dr Francesco Cremonesi — <francesco.cremonesi@inria.fr>  
+- Corresponding author: Dr Petros Kountouris — <petrosk@cing.ac.cy>  
+- GitHub repository maintainer: Dr Stella Tamana — <stellat@cing.ac.cy>
+
+*Last updated:* 2025-10-13
