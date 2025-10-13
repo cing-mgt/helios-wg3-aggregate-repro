@@ -8,7 +8,7 @@ HELIOS WG3 — Aggregate & Reproducible Figures
 - [R](#r)
 - [Notes](#notes)
 - [Reproducibility](#reproducibility)
-- [License](#license)
+- [Licensing](#licensing)
 - [Contact](#contact)
 
 **Status:** Pre-publication. Please do not redistribute figures outside
@@ -74,8 +74,9 @@ pip install pandas numpy matplotlib plotly kaleido Pillow
 python scripts/python/analysis_repro.py
 ```
 
-**Outputs** - `figures/helios-data-types-final.png` -
-`figures/Manuscript_Figure3.tiff`
+- **Outputs**
+  - `figures/helios-data-types-final.png`
+  - `figures/Manuscript_Figure3.tiff`
 
 ### Figure 5 — Centralized vs Federated funnel
 
@@ -121,12 +122,14 @@ Rscript scripts/R/HELIOS_WG3_Final_analysis.R
   monochrome ramps by group).
 
 ## Licensing
+
 - **Code:** MIT — see [`LICENSE`](./LICENSE)
-- **Data (in `data/`):** CC BY 4.0 — see [`data/LICENSE`](./data/LICENSE)
+- **Data:** CC BY 4.0 — see [`data/LICENSE`](./data/LICENSE)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![License: CC BY 4.0](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
-
+[![License:
+MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![License: CC BY
+4.0](https://img.shields.io/badge/Data%20License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 ## Contact
 
