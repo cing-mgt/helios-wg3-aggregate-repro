@@ -112,3 +112,4 @@ data/*.csv
 *.env
 .env
 .env.*
+data/WG3_survey_responses.xlsx
