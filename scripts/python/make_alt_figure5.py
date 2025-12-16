@@ -79,27 +79,41 @@ def norm_permission(x) -> str:
     if "no but i could obtain it" in s_low or "no, but i could obtain it" in s_low:
         return "No, but could obtain"
     if s_low == "no":
-        return "No"
+        return "No, could not obtain it"
 
     # For branching logic: blanks/NA mean "question not shown" (structural missingness)
     return ""
 
-def stacked_bar(ax, x0, segments, colors, label_inside=True):
-    """Draw one stacked bar at x0 given list of (label, value)."""
+def stacked_bar(ax, x0, segments, colors, total=None, label_inside=True):
+    """
+    Draw one stacked bar at x0 given list of (label, value).
+    If total is provided, percentages are computed as val/total.
+    """
     bottom = 0
+    if total is None:
+        total = sum(v for _, v in segments) if segments else 0
+    total_safe = total if total > 0 else 1
+
     for lab, val in segments:
         if val <= 0:
             continue
+
         ax.bar(
             x0, val, bottom=bottom, width=0.6,
             color=colors[lab], edgecolor="white", linewidth=0.8
         )
-        if label_inside and val > 0:
+
+        if label_inside:
+            pct = 100 * val / total_safe
             ax.text(
-                x0, bottom + val/2, f"{int(val)}",
-                ha="center", va="center", fontsize=11, fontweight="bold"
+                x0, bottom + val/2,
+                f"{int(val)}\n({pct:.0f}%)",
+                ha="center", va="center",
+                fontsize=10, linespacing=1.5
             )
+
         bottom += val
+
     return bottom
 
 # -----------------------------
@@ -140,7 +154,7 @@ fed_no_n  = int(fed_will_counts.get("No", 0))
 cent_yes = eligible[eligible["_cent_will"] == "Yes"].copy()
 fed_yes  = eligible[eligible["_fed_will"] == "Yes"].copy()
 
-perm_order = ["Yes", "No, but could obtain", "No"]
+perm_order = ["Yes", "No, but could obtain", "No, could not obtain"]
 
 cent_perm_counts = (
     cent_yes["_cent_perm"]
@@ -170,16 +184,16 @@ colors_will = {
 colors_perm = {
     "Yes": "#228833",                 # green
     "No, but could obtain": "#CCBB44",# yellow
-    "No": "#EE6677",                  # red
+    "No, could not obtain": "#AA3377",                  # purple
 }
 
 fig, axes = plt.subplots(1, 2, figsize=(12.5, 6.2), sharey=True)
 
 panels = [
-    ("Centralized model", axes[0],
+    ("Centralized data-sharing model", axes[0],
      [("Yes", cent_yes_n), ("No", cent_no_n)],
      list(zip(perm_order, cent_perm_vals))),
-    ("Federated model", axes[1],
+    ("Federated analysis model", axes[1],
      [("Yes", fed_yes_n), ("No", fed_no_n)],
      list(zip(perm_order, fed_perm_vals))),
 ]
@@ -190,12 +204,23 @@ for title, ax, will_segments, perm_segments in panels:
     xpos = [0, 1]
     ax.set_xticks(xpos)
     ax.set_xticklabels(
-        ["Willingness\n(among eligible)", "Permission\n(if willing)"],
+        ["Willingness to\nparticipate in collaboration", "Permission to\nshare and reuse data"],
         fontsize=11
     )
 
-    stacked_bar(ax, xpos[0], will_segments, colors_will, label_inside=True)
-    stacked_bar(ax, xpos[1], perm_segments, colors_perm, label_inside=True)
+    # Denominators
+    will_total_cent = cent_yes_n + cent_no_n
+    will_total_fed = fed_yes_n + fed_no_n
+    perm_total_cent = sum(cent_perm_vals)
+    perm_total_fed = sum(fed_perm_vals)
+
+    # In your loop (inside for title, ax, will_segments, perm_segments in panels:)
+    if title.startswith("Centralized"):
+        stacked_bar(ax, xpos[0], will_segments, colors_will, total=will_total_cent, label_inside=True)
+        stacked_bar(ax, xpos[1], perm_segments, colors_perm, total=perm_total_cent, label_inside=True)
+    else:
+        stacked_bar(ax, xpos[0], will_segments, colors_will, total=will_total_fed, label_inside=True)
+        stacked_bar(ax, xpos[1], perm_segments, colors_perm, total=perm_total_fed, label_inside=True)
 
     ax.grid(axis="y", linestyle="--", alpha=0.35)
     ax.set_axisbelow(True)
@@ -207,7 +232,7 @@ axes[0].set_ylabel("Number of respondents", fontsize=12)
 # -----------------------------
 legend_items = [
     # Row 1: Willingness header (force full row)
-    Line2D([0], [0], color="none", label="Willingness"),
+    Line2D([0], [0], color="none", label="Willingness to\nparticipate in collaboration"),
     Line2D([0], [0], color="none", label=""),
     Line2D([0], [0], color="none", label=""),
     Line2D([0], [0], color="none", label=""),
@@ -219,7 +244,7 @@ legend_items = [
     Line2D([0], [0], color="none", label=""),
 
     # Row 3: Permission header (force full row)
-    Line2D([0], [0], color="none", label="Permission (if willing)"),
+    Line2D([0], [0], color="none", label="Permission to\nshare and reuse data"),
     Line2D([0], [0], color="none", label=""),
     Line2D([0], [0], color="none", label=""),
     Line2D([0], [0], color="none", label=""),
@@ -227,7 +252,7 @@ legend_items = [
     # Row 4: Permission categories
     Line2D([0], [0], color=colors_perm["Yes"], lw=8, label="Yes"),
     Line2D([0], [0], color=colors_perm["No, but could obtain"], lw=8, label="No, but could obtain"),
-    Line2D([0], [0], color=colors_perm["No"], lw=8, label="No"),
+    Line2D([0], [0], color=colors_perm["No, could not obtain"], lw=8, label="No, could not obtain"),
     Line2D([0], [0], color="none", label=""),
 ]
 
@@ -241,7 +266,10 @@ leg = fig.legend(
 )
 
 for text in leg.get_texts():
-    if text.get_text() in ["Willingness", "Permission (if willing)"]:
+    if text.get_text() in [
+        "Willingness to\nparticipate in collaboration",
+        "Permission to\nshare and reuse data"
+    ]:
         text.set_fontweight("bold")
         text.set_ha("center")
 
