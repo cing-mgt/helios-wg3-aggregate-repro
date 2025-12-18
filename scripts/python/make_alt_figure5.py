@@ -79,7 +79,7 @@ def norm_permission(x) -> str:
     if "no but i could obtain it" in s_low or "no, but i could obtain it" in s_low:
         return "No, but could obtain"
     if s_low == "no":
-        return "No, could not obtain it"
+        return "No, could not obtain"
 
     # For branching logic: blanks/NA mean "question not shown" (structural missingness)
     return ""
@@ -105,11 +105,20 @@ def stacked_bar(ax, x0, segments, colors, total=None, label_inside=True):
 
         if label_inside:
             pct = 100 * val / total_safe
+            # Adaptive font size and padding for small segments
+            fs = 10 if val >= 4 else 9
+            pad = 0.12 if val <= 3 else 0.0
+
             ax.text(
-                x0, bottom + val/2,
+                x0,
+                bottom + val / 2 + pad,
                 f"{int(val)}\n({pct:.0f}%)",
-                ha="center", va="center",
-                fontsize=10, linespacing=1.5
+                ha="center",
+                va="center",
+                fontsize=fs,
+                color="black",
+                #fontweight="bold",
+                clip_on=True
             )
 
         bottom += val
