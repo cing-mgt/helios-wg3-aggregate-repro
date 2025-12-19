@@ -2,8 +2,7 @@
 Figure 5 (revised): Two-panel stacked bars (Centralized vs Federated)
 
 Within each panel:
-  - Bar 1 (Willingness): Yes/No among eligible respondents
-      Eligibility = multi-site collaboration willingness == "Yes"
+  - Bar 1 (Willingness): Yes/No respondents
   - Bar 2 (Permission): permission status among those who answered "Yes" to the corresponding model
       (i.e., conditional/branching logic; blanks are structural and excluded)
 
@@ -37,8 +36,6 @@ tif_path = FIGDIR / "Manuscript_Figure5_bar.tiff"
 # -----------------------------
 # 2) COLUMN NAMES (MUST match Excel export exactly)
 # -----------------------------
-COL_MULTI_SITE = "Would you be open to participating in a multi-site research collaboration?"
-
 COL_CENT_WILL = (
     "Would you be willing to share your data in a centralized database outside of your institution for research purposes?"
 )
@@ -74,14 +71,25 @@ def norm_permission(x) -> str:
     s = norm_str(x)
     s_low = s.lower()
 
-    if s_low == "yes":
+    if s_low == "":
+        return ""
+
+    # YES variants (e.g., "Yes, but only for some data types.")
+    if s_low.startswith("yes"):
         return "Yes"
-    if "no but i could obtain it" in s_low or "no, but i could obtain it" in s_low:
+
+    # NO-but-could-obtain variants
+    if "could obtain" in s_low:
         return "No, but could obtain"
+
+    # NO-could-not-obtain variants
+    if "could not obtain" in s_low or "cannot obtain" in s_low:
+        return "No, could not obtain"
+
+    # Plain "No"
     if s_low == "no":
         return "No, could not obtain"
 
-    # For branching logic: blanks/NA mean "question not shown" (structural missingness)
     return ""
 
 def stacked_bar(ax, x0, segments, colors, total=None, label_inside=True):
@@ -131,7 +139,7 @@ def stacked_bar(ax, x0, segments, colors, total=None, label_inside=True):
 df = pd.read_excel(INPUT_FILE, sheet_name=SHEET_NAME)
 df.columns = df.columns.map(lambda c: str(c).strip())
 
-required = [COL_MULTI_SITE, COL_CENT_WILL, COL_CENT_PERM, COL_FED_WILL, COL_FED_PERM]
+required = [COL_CENT_WILL, COL_CENT_PERM, COL_FED_WILL, COL_FED_PERM]
 missing = [c for c in required if c not in df.columns]
 if missing:
     raise ValueError(
@@ -139,19 +147,17 @@ if missing:
         "\n\nTip: print(df.columns.tolist()) and update COL_* strings to match exactly."
     )
 
-# Normalize core answers
-df["_multi_site"] = df[COL_MULTI_SITE].map(norm_yesno)
-df["_cent_will"]  = df[COL_CENT_WILL].map(norm_yesno)
-df["_cent_perm"]  = df[COL_CENT_PERM].map(norm_permission)
-df["_fed_will"]   = df[COL_FED_WILL].map(norm_yesno)
-df["_fed_perm"]   = df[COL_FED_PERM].map(norm_permission)
+# Normalize
+df["_cent_will"] = df[COL_CENT_WILL].map(norm_yesno)
+df["_cent_perm"] = df[COL_CENT_PERM].map(norm_permission)
+df["_fed_will"]  = df[COL_FED_WILL].map(norm_yesno)
+df["_fed_perm"]  = df[COL_FED_PERM].map(norm_permission)
 
-# Eligible = multi-site collaboration willingness "Yes"
-eligible = df[df["_multi_site"] == "Yes"].copy()
-
-# --- Willingness counts among eligible ---
-cent_will_counts = eligible["_cent_will"].value_counts(dropna=False).to_dict()
-fed_will_counts  = eligible["_fed_will"].value_counts(dropna=False).to_dict()
+# -----------------------------
+# 4A) WILLINGNESS (NO BRANCHING): count Yes/No among all respondents
+# -----------------------------
+cent_will_counts = df["_cent_will"].replace("", np.nan).dropna().value_counts().to_dict()
+fed_will_counts  = df["_fed_will"].replace("", np.nan).dropna().value_counts().to_dict()
 
 cent_yes_n = int(cent_will_counts.get("Yes", 0))
 cent_no_n  = int(cent_will_counts.get("No", 0))
@@ -159,21 +165,27 @@ cent_no_n  = int(cent_will_counts.get("No", 0))
 fed_yes_n = int(fed_will_counts.get("Yes", 0))
 fed_no_n  = int(fed_will_counts.get("No", 0))
 
-# --- Permission counts among those willing "Yes" (branching: exclude blanks) ---
-cent_yes = eligible[eligible["_cent_will"] == "Yes"].copy()
-fed_yes  = eligible[eligible["_fed_will"] == "Yes"].copy()
+# Denominators for willingness bars (should be 44 if everyone answered Yes/No)
+will_total_cent = cent_yes_n + cent_no_n
+will_total_fed  = fed_yes_n + fed_no_n
 
+# -----------------------------
+# 4B) PERMISSION (BRANCHING): among those willing "Yes" for each model
+# -----------------------------
 perm_order = ["Yes", "No, but could obtain", "No, could not obtain"]
 
+cent_yes_df = df[df["_cent_will"] == "Yes"].copy()
+fed_yes_df  = df[df["_fed_will"] == "Yes"].copy()
+
 cent_perm_counts = (
-    cent_yes["_cent_perm"]
-    .replace("", np.nan)
+    cent_yes_df["_cent_perm"]
+    .replace("", np.nan)   # structural blanks removed
     .dropna()
     .value_counts()
     .to_dict()
 )
 fed_perm_counts = (
-    fed_yes["_fed_perm"]
+    fed_yes_df["_fed_perm"]
     .replace("", np.nan)
     .dropna()
     .value_counts()
@@ -183,17 +195,21 @@ fed_perm_counts = (
 cent_perm_vals = [int(cent_perm_counts.get(k, 0)) for k in perm_order]
 fed_perm_vals  = [int(fed_perm_counts.get(k, 0))  for k in perm_order]
 
+perm_total_cent = sum(cent_perm_vals)
+perm_total_fed  = sum(fed_perm_vals)
+
 # -----------------------------
 # 5) PLOT: two panels, two bars each
 # -----------------------------
 colors_will = {
     "Yes": "#4477AA",  # blue
-    "No":  "#EE6677",  # red
+    "No":  "#CC6677",  # red
 }
+
 colors_perm = {
-    "Yes": "#228833",                 # green
-    "No, but could obtain": "#CCBB44",# yellow
-    "No, could not obtain": "#AA3377",                  # purple
+    "Yes": "#88CCEE",                  # blue
+    "No, but could obtain": "#EE6677",  # red
+    "No, could not obtain": "#66C2A5",  # green
 }
 
 fig, axes = plt.subplots(1, 2, figsize=(12.5, 6.2), sharey=True)
@@ -213,7 +229,7 @@ for title, ax, will_segments, perm_segments in panels:
     xpos = [0, 1]
     ax.set_xticks(xpos)
     ax.set_xticklabels(
-        ["Willingness to\nparticipate in collaboration", "Permission to\nshare and reuse data"],
+        ["Willingness", "Permission"],
         fontsize=11
     )
 
@@ -237,52 +253,49 @@ for title, ax, will_segments, perm_segments in panels:
 axes[0].set_ylabel("Number of respondents", fontsize=12)
 
 # -----------------------------
-# 6) LEGEND (below panels, with section headers on separate rows)
+# 6) LEGENDS (two clean blocks)
 # -----------------------------
-legend_items = [
-    # Row 1: Willingness header (force full row)
-    Line2D([0], [0], color="none", label="Willingness to\nparticipate in collaboration"),
-    Line2D([0], [0], color="none", label=""),
-    Line2D([0], [0], color="none", label=""),
-    Line2D([0], [0], color="none", label=""),
 
-    # Row 2: Willingness categories
+# --- Legend 1: Willingness ---
+legend_will = [
     Line2D([0], [0], color=colors_will["Yes"], lw=8, label="Yes"),
     Line2D([0], [0], color=colors_will["No"],  lw=8, label="No"),
-    Line2D([0], [0], color="none", label=""),
-    Line2D([0], [0], color="none", label=""),
+]
 
-    # Row 3: Permission header (force full row)
-    Line2D([0], [0], color="none", label="Permission to\nshare and reuse data"),
-    Line2D([0], [0], color="none", label=""),
-    Line2D([0], [0], color="none", label=""),
-    Line2D([0], [0], color="none", label=""),
+leg1 = fig.legend(
+    handles=legend_will,
+    title="Willingness\nCentralized / Federated",
+    loc="lower left",
+    bbox_to_anchor=(0.10, -0.075),
+    frameon=False,
+    fontsize=11,
+    title_fontsize=12,
+)
 
-    # Row 4: Permission categories
+leg1.get_title().set_fontweight("bold")
+leg1.get_title().set_ha("center")
+
+# --- Legend 2: Permission ---
+legend_perm = [
     Line2D([0], [0], color=colors_perm["Yes"], lw=8, label="Yes"),
     Line2D([0], [0], color=colors_perm["No, but could obtain"], lw=8, label="No, but could obtain"),
     Line2D([0], [0], color=colors_perm["No, could not obtain"], lw=8, label="No, could not obtain"),
-    Line2D([0], [0], color="none", label=""),
 ]
 
-leg = fig.legend(
-    handles=legend_items,
-    loc="lower center",
-    ncol=4,
+leg2 = fig.legend(
+    handles=legend_perm,
+    title="Permission to share\nand reuse data",
+    loc="lower right",
+    bbox_to_anchor=(0.90, -0.075),
     frameon=False,
-    bbox_to_anchor=(0.5, -0.12),
     fontsize=11,
+    title_fontsize=12,
 )
 
-for text in leg.get_texts():
-    if text.get_text() in [
-        "Willingness to\nparticipate in collaboration",
-        "Permission to\nshare and reuse data"
-    ]:
-        text.set_fontweight("bold")
-        text.set_ha("center")
+leg2.get_title().set_fontweight("bold")
+leg2.get_title().set_ha("center")
 
-plt.tight_layout(rect=[0, 0.12, 1, 1])
+plt.tight_layout(rect=[0, 0.11, 1, 1])
 
 # -----------------------------
 # 7) SAVE: PNG + 300 dpi TIFF
@@ -295,3 +308,8 @@ with Image.open(png_path) as im:
 
 print("Saved:", png_path)
 print("Saved:", tif_path)
+
+print("Centralized willingness total:", will_total_cent, " (Yes:", cent_yes_n, "No:", cent_no_n, ")")
+print("Federated willingness total:", will_total_fed, " (Yes:", fed_yes_n, "No:", fed_no_n, ")")
+print("Centralized permission total (among Yes):", perm_total_cent, cent_perm_counts)
+print("Federated permission total (among Yes):", perm_total_fed, fed_perm_counts)
