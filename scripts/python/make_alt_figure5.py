@@ -264,7 +264,7 @@ legend_will = [
 
 leg1 = fig.legend(
     handles=legend_will,
-    title="Willingness\nCentralized / Federated",
+    title="Willingness for participation in:\nCentralized / Federated",
     loc="lower left",
     bbox_to_anchor=(0.10, -0.075),
     frameon=False,
