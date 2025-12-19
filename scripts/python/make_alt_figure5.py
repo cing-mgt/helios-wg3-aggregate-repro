@@ -208,8 +208,8 @@ colors_will = {
 
 colors_perm = {
     "Yes": "#88CCEE",                  # blue
-    "No, but could obtain": "#EE6677",  # red
-    "No, could not obtain": "#66C2A5",  # green
+    "No, but could obtain": "#66C2A5",  # red
+    "No, could not obtain": "#EE6677",  # green
 }
 
 fig, axes = plt.subplots(1, 2, figsize=(12.5, 6.2), sharey=True)
